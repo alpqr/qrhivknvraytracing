@@ -14,6 +14,7 @@ void main()
     //           * *
     //          *   *
     // (1, 0)  * * * *  (0, 1)
+    // which gives a different result compared to the nv_ray_tracing_basic sample but this is expected.
 
     hitValue = vec3(1.0f - baryCoord.x - baryCoord.y, baryCoord.x, baryCoord.y);
 }

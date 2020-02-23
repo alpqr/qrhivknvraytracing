@@ -749,7 +749,7 @@ void RaytracingWindow::customRender()
     // ### there will be a validation warning once (and then for each resize)
     // due to incorrect old/newLayouts in the QRhi-generated image layout
     // transition (as it still thinks that the image is in the initial
-    // PREINITIALIZED layout). Figure something out layer. [QRhi TODO]
+    // PREINITIALIZED layout). Figure something out later. [QRhi TODO]
 
     // Render pass: draw a quad textured with m_tex
     cb->beginPass(m_sc->currentFrameRenderTarget(), Qt::white, { 1.0f, 0 });
