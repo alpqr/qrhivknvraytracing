@@ -1,0 +1,9 @@
+<!DOCTYPE RCC><RCC version="1.0">
+  <qresource>
+    <file>fsquad.vert.qsb</file>
+    <file>fsquad.frag.qsb</file>
+    <file>raygen.spv</file>
+    <file>closesthit.spv</file>
+    <file>miss.spv</file>
+  </qresource>
+</RCC>
