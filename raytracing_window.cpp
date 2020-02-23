@@ -363,10 +363,10 @@ void RaytracingWindow::customInit()
     VkMemoryAllocateInfo bufMemAllocInfo = {};
     bufMemAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     quint8 *p;
-    auto findMemTypeIndex = [&bufMemReq, &memProps](uint32_t wantedBits) {
+    auto findMemTypeIndex = [&memProps](uint32_t wantedBits, const VkMemoryRequirements &memReqs) {
         uint32_t memTypeIndex = 0;
         for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
-            if (bufMemReq.memoryTypeBits & (1 << i)) {
+            if (memReqs.memoryTypeBits & (1 << i)) {
                 if ((memProps.memoryTypes[i].propertyFlags & wantedBits) == wantedBits) {
                     memTypeIndex = i;
                     break;
@@ -382,7 +382,7 @@ void RaytracingWindow::customInit()
     df->vkCreateBuffer(h->dev, &bufInfo, nullptr, &m_geometryTransformBuf);
     df->vkGetBufferMemoryRequirements(h->dev, m_geometryTransformBuf, &bufMemReq);
     bufMemAllocInfo.allocationSize = bufMemReq.size;
-    bufMemAllocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    bufMemAllocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufMemReq);
     err = df->vkAllocateMemory(h->dev, &bufMemAllocInfo, nullptr, &m_geometryTransformBufMem);
     if (err != VK_SUCCESS)
         qFatal("Failed to allocate geometry transform buffer memory: %d", err);
@@ -441,7 +441,7 @@ void RaytracingWindow::customInit()
     VkMemoryAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memReq.memoryRequirements.size;
-    allocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    allocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memReq.memoryRequirements);
     err = df->vkAllocateMemory(h->dev, &allocInfo, nullptr, &m_blasMem);
     if (err != VK_SUCCESS)
         qFatal("Failed to allocate memory for bottom level acceleration structure: %d", err);
@@ -474,6 +474,7 @@ void RaytracingWindow::customInit()
     qDebug("tlas memory needed: %llu", memReq.memoryRequirements.size);
 
     allocInfo.allocationSize = memReq.memoryRequirements.size;
+    allocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memReq.memoryRequirements);
     err = df->vkAllocateMemory(h->dev, &allocInfo, nullptr, &m_tlasMem);
     if (err != VK_SUCCESS)
         qFatal("Failed to allocate memory for top level acceleration structure: %d", err);
@@ -500,7 +501,7 @@ void RaytracingWindow::customInit()
     df->vkCreateBuffer(h->dev, &bufInfo, nullptr, &m_scratchBuf);
     df->vkGetBufferMemoryRequirements(h->dev, m_scratchBuf, &bufMemReq);
     bufMemAllocInfo.allocationSize = bufMemReq.size;
-    bufMemAllocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    bufMemAllocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, bufMemReq);
     err = df->vkAllocateMemory(h->dev, &bufMemAllocInfo, nullptr, &m_scratchBufMem);
     if (err != VK_SUCCESS)
         qFatal("Failed to allocate scratch buffer memory: %d", err);
@@ -525,7 +526,7 @@ void RaytracingWindow::customInit()
     df->vkCreateBuffer(h->dev, &bufInfo, nullptr, &m_instanceBuf);
     df->vkGetBufferMemoryRequirements(h->dev, m_instanceBuf, &bufMemReq);
     bufMemAllocInfo.allocationSize = bufMemReq.size;
-    bufMemAllocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    bufMemAllocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufMemReq);
     err = df->vkAllocateMemory(h->dev, &bufMemAllocInfo, nullptr, &m_instanceBufMem);
     if (err != VK_SUCCESS)
         qFatal("Failed to allocate instance buffer memory: %d", err);
@@ -542,7 +543,7 @@ void RaytracingWindow::customInit()
     df->vkCreateBuffer(h->dev, &bufInfo, nullptr, &m_sbtBuf);
     df->vkGetBufferMemoryRequirements(h->dev, m_sbtBuf, &bufMemReq);
     bufMemAllocInfo.allocationSize = bufMemReq.size;
-    bufMemAllocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    bufMemAllocInfo.memoryTypeIndex = findMemTypeIndex(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufMemReq);
     err = df->vkAllocateMemory(h->dev, &bufMemAllocInfo, nullptr, &m_sbtBufMem);
     if (err != VK_SUCCESS)
         qFatal("Failed to allocate shader binding table buffer memory: %d", err);
@@ -611,8 +612,9 @@ void RaytracingWindow::customRender()
         // because scratch is reused
         VkMemoryBarrier memoryBarrier = {};
         memoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-        memoryBarrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
-        memoryBarrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
+        const VkAccessFlags accelAccess = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV;
+        memoryBarrier.srcAccessMask = accelAccess;
+        memoryBarrier.dstAccessMask = accelAccess;
         df->vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV,
                                  0, 1, &memoryBarrier, 0, 0, 0, 0);
 
@@ -743,6 +745,11 @@ void RaytracingWindow::customRender()
 
         cb->endExternal();
     }
+
+    // ### there will be a validation warning once (and then for each resize)
+    // due to incorrect old/newLayouts in the QRhi-generated image layout
+    // transition (as it still thinks that the image is in the initial
+    // PREINITIALIZED layout). Figure something out layer. [QRhi TODO]
 
     // Render pass: draw a quad textured with m_tex
     cb->beginPass(m_sc->currentFrameRenderTarget(), Qt::white, { 1.0f, 0 });
