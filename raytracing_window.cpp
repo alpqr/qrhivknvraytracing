@@ -626,7 +626,7 @@ void RaytracingWindow::customRender()
     }
 
     VkImage image = *reinterpret_cast<const VkImage *>(m_tex->nativeTexture().object);
-    // ### the image view should be retrievable from the QRhiTexture, the one we use for graphics would be suitable as-is [QRhi TODO]
+    // ### the image view should be retrievable from the QRhiTexture, the one we use for graphics would be suitable as-is
     if (image != m_lastImage) {
         m_lastImage = image;
         VkImageViewCreateInfo viewInfo = {};
@@ -652,7 +652,6 @@ void RaytracingWindow::customRender()
     const int currentFrameSlot = m_rhi->currentFrameSlot();
 
     // Dynamic QRhiBuffers are backed by multiple native buffers, pick the current one
-    // ### this relies on the fact the nativeBuffer() executes pending host writes [QRhi TODO]
     VkBuffer ubuf = *reinterpret_cast<const VkBuffer *>(m_ubuf->nativeBuffer().objects[currentFrameSlot]);
 
     {
@@ -740,10 +739,12 @@ void RaytracingWindow::customRender()
         cb->endExternal();
     }
 
-    // ### there will be a validation warning once (and then for each resize)
-    // due to incorrect old/newLayouts in the QRhi-generated image layout
-    // transition (as it still thinks that the image is in the initial
-    // PREINITIALIZED layout). Figure something out later. [QRhi TODO]
+    // Communicate to the QRhi backend that the image backing m_tex is in this
+    // layout. Without this we would get at least one incorrect layout
+    // transition because m_tex is probably PREINITIALIZED initially, and
+    // nothing QRhi recorded on the command buffer changed that so far. But
+    // what we recorded above does just that.
+    m_tex->setNativeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     // Render pass: draw a quad textured with m_tex
     cb->beginPass(m_sc->currentFrameRenderTarget(), Qt::white, { 1.0f, 0 });
