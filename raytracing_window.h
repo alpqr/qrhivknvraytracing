@@ -106,7 +106,7 @@ private:
     VkBuffer m_sbtBuf = VK_NULL_HANDLE;
     VkDeviceMemory m_sbtBufMem = VK_NULL_HANDLE;
 
-    QVector<VkImageView> m_imageViews;
+    QVarLengthArray<VkImageView, 2> m_imageViews;
     VkImage m_lastImage = VK_NULL_HANDLE;
 };
 

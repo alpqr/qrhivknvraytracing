@@ -626,7 +626,6 @@ void RaytracingWindow::customRender()
     }
 
     VkImage image = *reinterpret_cast<const VkImage *>(m_tex->nativeTexture().object);
-    // ### the image view should be retrievable from the QRhiTexture, the one we use for graphics would be suitable as-is
     if (image != m_lastImage) {
         m_lastImage = image;
         VkImageViewCreateInfo viewInfo = {};
@@ -645,6 +644,12 @@ void RaytracingWindow::customRender()
         viewInfo.subresourceRange.layerCount = 1;
         VkImageView v;
         df->vkCreateImageView(h->dev, &viewInfo, nullptr, &v);
+        if (!m_imageViews.isEmpty()) {
+            // assumes FramesInFlight is 2
+            for (int i = 0; i < m_imageViews.count() - 1; ++i)
+                df->vkDestroyImageView(h->dev, m_imageViews[i], nullptr);
+            m_imageViews.remove(0, m_imageViews.count() - 1);
+        }
         m_imageViews.append(v);
     }
     VkImageView imageView = m_imageViews.last();
