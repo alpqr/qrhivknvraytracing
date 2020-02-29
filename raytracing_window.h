@@ -56,7 +56,6 @@
 class RaytracingWindow : public Window
 {
 public:
-    RaytracingWindow();
     ~RaytracingWindow();
 
     void customInit() override;

@@ -109,6 +109,8 @@ void Window::init()
     QRhiVulkanInitParams params;
     params.inst = vulkanInstance();
     params.window = this;
+    params.deviceExtensions = { "VK_KHR_get_memory_requirements2", "VK_NV_ray_tracing" };
+
     m_rhi.reset(QRhi::create(QRhi::Vulkan, &params));
 
     if (!m_rhi)

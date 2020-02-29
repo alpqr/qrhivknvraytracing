@@ -100,12 +100,6 @@ static float quadVertexAndCoordData[] = {
    1.0f,   1.0f,   1.0f, 0.0f
 };
 
-RaytracingWindow::RaytracingWindow()
-{
-    // ### ugh! this really needs a better solution [QRhi TODO]
-    qputenv("QT_VULKAN_DEVICE_EXTENSIONS", "VK_KHR_get_memory_requirements2;VK_NV_ray_tracing");
-}
-
 RaytracingWindow::~RaytracingWindow()
 {
     const QRhiVulkanNativeHandles *h = static_cast<const QRhiVulkanNativeHandles *>(m_rhi->nativeHandles());

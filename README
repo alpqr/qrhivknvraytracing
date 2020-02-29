@@ -1,12 +1,14 @@
 Demo of using VK_NV_raytracing in a (Vulkan-only) QRhi application.
 
-Needs an RTX card, a recent Vulkan SDK, and a patched (https://codereview.qt-project.org/c/qt/qtbase/+/291562) qtbase 5.15.
+Needs an RTX card, a recent Vulkan SDK, and a patched (*) qtbase 5.15.
 
 The result is a wonderful triangle.
 
 It uses QRhi's facilities as much as possible, in order to reduce the native Vulkan boilerplate needed, so this also a
-good test of accessing the native objects backing a QRhiBuffer or QRhiTexture. (some minor missing or suboptimal
-QRhi features are also uncovered by it, see [QRhi TODO] comments. Out of these only one is critical, hence the patch
-mentioned above.)
+good test of accessing the native objects backing a QRhiBuffer or QRhiTexture.
 
 The raytracing shaders and much of the pipeline setup are based on the sample at https://github.com/SaschaWillems/Vulkan/tree/master/examples/nv_ray_tracing_basic
+
+(*)
+https://codereview.qt-project.org/c/qt/qtbase/+/291562
+https://codereview.qt-project.org/c/qt/qtbase/+/292530
