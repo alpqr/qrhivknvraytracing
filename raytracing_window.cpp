@@ -625,7 +625,7 @@ void RaytracingWindow::customRender()
         cb->endExternal();
     }
 
-    VkImage image = *reinterpret_cast<const VkImage *>(m_tex->nativeTexture().object);
+    VkImage image = VkImage(m_tex->nativeTexture().object);
     if (image != m_lastImage) {
         m_lastImage = image;
         VkImageViewCreateInfo viewInfo = {};
