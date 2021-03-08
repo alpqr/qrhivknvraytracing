@@ -131,7 +131,7 @@ void Window::init()
 
 void Window::resizeSwapChain()
 {
-    m_hasSwapChain = m_sc->buildOrResize();
+    m_hasSwapChain = m_sc->createOrResize();
 
     const QSize outputSize = m_sc->currentPixelSize();
 
@@ -157,7 +157,7 @@ void Window::releaseSwapChain()
 {
     if (m_hasSwapChain) {
         m_hasSwapChain = false;
-        m_sc->release();
+        m_sc->destroy();
     }
 }
 

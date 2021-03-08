@@ -192,20 +192,20 @@ void RaytracingWindow::customInit()
     m_vbufReady = false;
 
     m_tex.reset(m_rhi->newTexture(QRhiTexture::RGBA8, size() * devicePixelRatio(), 1, QRhiTexture::UsedWithLoadStore));
-    m_tex->build();
+    m_tex->create();
 
     m_quadVbuf.reset(m_rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, sizeof(quadVertexAndCoordData)));
-    m_quadVbuf->build();
+    m_quadVbuf->create();
 
     m_quadSampler.reset(m_rhi->newSampler(QRhiSampler::Nearest, QRhiSampler::Nearest, QRhiSampler::None,
                                           QRhiSampler::ClampToEdge, QRhiSampler::ClampToEdge));
-    m_quadSampler->build();
+    m_quadSampler->create();
 
     m_quadSrb.reset(m_rhi->newShaderResourceBindings());
     m_quadSrb->setBindings({
         QRhiShaderResourceBinding::sampledTexture(0, QRhiShaderResourceBinding::FragmentStage, m_tex.get(), m_quadSampler.get())
     });
-    m_quadSrb->build();
+    m_quadSrb->create();
 
     m_quadPs.reset(m_rhi->newGraphicsPipeline());
     m_quadPs->setShaderStages({
@@ -223,18 +223,18 @@ void RaytracingWindow::customInit()
     m_quadPs->setVertexInputLayout(inputLayout);
     m_quadPs->setShaderResourceBindings(m_quadSrb.get());
     m_quadPs->setRenderPassDescriptor(m_rp.get());
-    m_quadPs->build();
+    m_quadPs->create();
 
     // Now onto the raytracing resources
 
     // Say no to boilerplate; will use QRhi and dig out the VkBuffers afterwards (same goes for the image)
     m_vbuf.reset(m_rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, sizeof(vertexData)));
-    m_vbuf->build();
+    m_vbuf->create();
 
     VkBuffer vbuf = *reinterpret_cast<const VkBuffer *>(m_vbuf->nativeBuffer().objects[0]);
 
     m_ubuf.reset(m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 64 * 2));
-    m_ubuf->build();
+    m_ubuf->create();
 
     // but sadly, no help from QRhi from this point on. so much for no boilerplate..
 
@@ -583,7 +583,7 @@ void RaytracingWindow::customRender()
     const QSize outputSizeInPixels = m_sc->currentPixelSize();
     if (m_tex->pixelSize() != outputSizeInPixels) {
         m_tex->setPixelSize(outputSizeInPixels);
-        m_tex->build();
+        m_tex->create();
     }
 
     const QRhiVulkanNativeHandles *h = static_cast<const QRhiVulkanNativeHandles *>(m_rhi->nativeHandles());
